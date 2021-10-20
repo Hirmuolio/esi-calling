@@ -502,15 +502,21 @@ def call_many_pages( call_url : str, authorized_character_id : str = '' ):
 		headers["Authorization"] = "Bearer {}".format( token )
 	
 	page_1 = call_esi( call_url, authorized_character_id )
+	returns = [ page_1 ]
 	
 	pages = []
 	if 'x-pages' in page_1.headers:
 		pages = list( range( 2, int( page_1.headers['x-pages'] ) + 1 ) )
 	
+	if len(pages) == 0:
+		return returns
+	
 	# Get the rest of the pages
 	
-	session = FuturesSession()
-	returns = [ page_1 ]
+	workers = min( 90, len(pages) )
+	session = FuturesSession(max_workers=workers)
+	
+	
 	done = False
 	loops_done = 0;
 	while not done:
